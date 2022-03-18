@@ -1,10 +1,16 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
+// import { Voucher } from "./Voucher";
 @ObjectType()
 @Entity()
 export class Event extends BaseEntity {
-  @Field(() => Int, { nullable: true })
+  @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -19,4 +25,7 @@ export class Event extends BaseEntity {
   @Field({ nullable: true })
   @Column("int", { default: 0, nullable: true })
   count_voucher: number;
+
+  // @OneToMany(() => Voucher, (voucher) => voucher.event)
+  // voucher: Voucher[];
 }

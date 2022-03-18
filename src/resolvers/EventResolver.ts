@@ -41,7 +41,6 @@ export class EventResolver {
       total_voucher: totalVoucher,
     }).save();
 
-    console.log(data);
     return data;
   }
 
@@ -50,7 +49,6 @@ export class EventResolver {
     @Arg("eventId", () => Int) id: number,
     @Arg("eventUpdateParams") eventUpdateParams: UpdateEventInput
   ) {
-    console.log(eventUpdateParams);
     const { totalVoucher, eventName } = eventUpdateParams;
     let updatedEvent;
     const event = await Event.findOne({
@@ -60,10 +58,14 @@ export class EventResolver {
     });
     if (event) {
       if (!totalVoucher) {
-        // updatedEvent = await Event.save({
-        //   id,
-        //   event_name: eventName,
-        // });
+        updatedEvent = await Event.update(
+          {
+            id,
+          },
+          {
+            event_name: eventName,
+          }
+        );
       }
       if (totalVoucher && totalVoucher < event.count_voucher) {
         throw new Error(
@@ -79,8 +81,12 @@ export class EventResolver {
       }
     }
 
-    console.log(updatedEvent, "....");
+    return Boolean(updatedEvent);
+  }
 
+  @Mutation(() => Boolean)
+  async deleteEvent(@Arg("id", () => Int) id: number) {
+    await Event.delete({ id });
     return true;
   }
 
