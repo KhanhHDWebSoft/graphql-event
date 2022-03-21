@@ -33,5 +33,9 @@
   "include": [
     "./src/**/*.tsx",
     "./src/**/*.ts"
+  ],
+  "typeRoots": [
+      "./src/typing-stubs",
+      "./node_modules/@types"
   ]
 }

@@ -3,6 +3,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
@@ -19,6 +20,7 @@ export class Voucher extends BaseEntity {
   @Column()
   voucher_code: string;
 
-  // @ManyToOne(() => Event, (event) => event.voucher)
-  // event: Event;
+  @ManyToOne(() => Event, (event) => event.voucher)
+  @JoinColumn({ name: "event_id" })
+  event: Event;
 }
