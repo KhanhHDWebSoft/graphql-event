@@ -1,6 +1,6 @@
 import { Event } from "../entity/Event";
 import { Voucher } from "../entity/Voucher";
-import { Repository } from "typeorm";
+import { Repository, getConnection, getManager } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import {
@@ -17,6 +17,9 @@ import {
   Ctx,
 } from "type-graphql";
 import { sendMail } from "../utils/sendmail";
+import { EventRepository } from "src/entity/EventRepository";
+import { ApolloError } from "apollo-server-express";
+import { VoucherRepository } from "src/entity/VoucherRepository";
 
 @InputType()
 class VoucherParams {
@@ -32,26 +35,48 @@ export class VoucherResolver {
 
   @Mutation(() => Boolean)
   async generateVoucher(@Arg("params") params: VoucherParams, @Ctx() ctx: any) {
-    const voucherCode = Math.floor(Math.random() * 1000);
-    const event = await Event.findOne({
-      where: {
-        id: params.eventId,
-      },
-    });
-    if (event) {
-      const data = Voucher.create({
-        voucher_code: voucherCode + "_voucher",
-        event,
-      });
-      await Voucher.save(data);
+    // const connection = getConnection();
+    // const queryRunner = connection.createQueryRunner();
+    // await queryRunner.connect();
+    let voucher = new Voucher();
+    await getManager().transaction(async (transactionEntityManager) => {
+      const eventRepository =
+        transactionEntityManager.getCustomRepository(EventRepository);
+      const event = await eventRepository.findOne(params.eventId);
 
-      await sendMail(
-        "khanhng3009@gmail.com",
-        "your voucher number is " + voucherCode
+      if (!event) {
+        throw new ApolloError("Event not found");
+      }
+
+      eventRepository.update(
+        {
+          id: event.id,
+        },
+        {
+          count_voucher: event.count_voucher + 1,
+        }
       );
-    }
 
-    return true;
+      const updatedEvent = await eventRepository.findOne(params.eventId);
+
+      if (updatedEvent) {
+        if (updatedEvent?.count_voucher >= updatedEvent?.total_voucher) {
+          throw new ApolloError("Sold out");
+        }
+        const voucherCode = Math.floor(Math.random() * 1000);
+
+        const voucherRepository =
+          transactionEntityManager.getCustomRepository(VoucherRepository);
+        const newVoucher = await voucherRepository.create({
+          voucher_code: voucherCode + "_code",
+          event: updatedEvent,
+        });
+
+        voucher = await newVoucher.save();
+      }
+    });
+
+    return voucher;
   }
 
   // @Query(() => [Voucher])
