@@ -73,6 +73,10 @@ export class VoucherResolver {
         });
 
         voucher = await newVoucher.save();
+        await sendMail(
+          "khanhng3009@gmail.com",
+          "your voucher number is " + voucherCode
+        );
       }
     });
 
